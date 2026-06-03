@@ -1,10 +1,9 @@
 package com.example.client;
 
-import com.example.client.SessionTimerHud;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.resources.ResourceLocation;
 
 public class ExampleModClient implements ClientModInitializer {
@@ -13,16 +12,14 @@ public class ExampleModClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        // Register HUD overlay
-        HudLayerRegistrationCallback.EVENT.register(layeredDraw ->
-            layeredDraw.addLayerBefore(
-                IdentifiedLayer.CHAT,
-                new ResourceLocation("sessiontimer", "timer_hud"),
-                HUD
-            )
+        // Register HUD before chat layer
+        HudElementRegistry.attachElementBefore(
+            VanillaHudElements.CHAT,
+            ResourceLocation.fromNamespaceAndPath("sessiontimer", "timer_hud"),
+            HUD
         );
 
-        // Tick every client tick to update the timer
+        // Tick counter
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.level != null) {
                 HUD.tick();
