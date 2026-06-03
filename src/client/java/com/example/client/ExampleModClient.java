@@ -10,50 +10,52 @@ import net.minecraft.resources.ResourceLocation;
 
 public class ExampleModClient implements ClientModInitializer {
 
-    public static final SessionTimerHud TIMER = new SessionTimerHud();
+	private static long sessionTicks = 0;
 
-    @Override
-    public void onInitializeClient() {
-        // Register HUD as lambda before chat layer
-        HudElementRegistry.attachElementBefore(
-            VanillaHudElements.CHAT,
-            ResourceLocation.fromNamespaceAndPath("sessiontimer", "timer_hud"),
-            (graphics, tickCounter) -> {
-                Minecraft mc = Minecraft.getInstance();
-                if (mc.level == null) return;
+	@Override
+	public void onInitializeClient() {
 
-                String label  = TIMER.getFormattedTime();
-                Component text = Component.literal(label);
+		// عداد الوقت - بيشتغل كل tick
+		ClientTickEvents.END_CLIENT_TICK.register(client -> {
+			if (client.level != null) {
+				sessionTicks++;
+			} else {
+				sessionTicks = 0;
+			}
+		});
 
-                int screenWidth = mc.getWindow().getGuiScaledWidth();
-                int textWidth   = mc.font.width(label);
-                int pad         = 4;
-                int boxW        = textWidth + pad * 2;
-                int boxH        = 14;
-                int x           = screenWidth - boxW - 6;
-                int y           = 6;
+		// شاشة صغيرة في الركن الأيمن العلوي
+		HudElementRegistry.attachElementBefore(
+			VanillaHudElements.CHAT,
+			ResourceLocation.fromNamespaceAndPath("modid", "session_timer"),
+			(graphics, tickCounter) -> {
+				Minecraft mc = Minecraft.getInstance();
+				if (mc.level == null) return;
 
-                // Background semi-transparent
-                graphics.fill(x, y, x + boxW, y + boxH, 0xAA000000);
+				long total   = sessionTicks / 20;
+				long hours   = total / 3600;
+				long minutes = (total % 3600) / 60;
+				long seconds = total % 60;
+				String label = String.format("Session: %02d:%02d:%02d", hours, minutes, seconds);
 
-                // Border
-                graphics.fill(x,          y,          x + boxW, y + 1,      0xFF555555);
-                graphics.fill(x,          y + boxH-1, x + boxW, y + boxH,   0xFF555555);
-                graphics.fill(x,          y,          x + 1,    y + boxH,   0xFF555555);
-                graphics.fill(x + boxW-1, y,          x + boxW, y + boxH,   0xFF555555);
+				int sw   = mc.getWindow().getGuiScaledWidth();
+				int tw   = mc.font.width(label);
+				int pad  = 4;
+				int boxW = tw + pad * 2;
+				int boxH = 14;
+				int x    = sw - boxW - 6;
+				int y    = 6;
 
-                // Text - Component version works in 26.1
-                graphics.drawString(mc.font, text, x + pad, y + 3, 0xFFFFFFFF);
-            }
-        );
-
-        // Tick counter
-        ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            if (client.level != null) {
-                TIMER.tick();
-            } else {
-                TIMER.reset();
-            }
-        });
-    }
+				// خلفية شفافة
+				graphics.fill(x, y, x + boxW, y + boxH, 0xAA000000);
+				// إطار
+				graphics.fill(x,          y,          x + boxW, y + 1,      0xFF555555);
+				graphics.fill(x,          y + boxH-1, x + boxW, y + boxH,   0xFF555555);
+				graphics.fill(x,          y,          x + 1,    y + boxH,   0xFF555555);
+				graphics.fill(x + boxW-1, y,          x + boxW, y + boxH,   0xFF555555);
+				// نص
+				graphics.drawString(mc.font, Component.literal(label), x + pad, y + 3, 0xFFFFFFFF);
+			}
+		);
+	}
 }
