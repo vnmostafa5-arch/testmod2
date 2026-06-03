@@ -12,7 +12,11 @@ public class SessionTimerHud {
         ticksInWorld = 0;
     }
 
-    public long getTicksInWorld() {
-        return ticksInWorld;
+    public String getFormattedTime() {
+        long totalSeconds = ticksInWorld / 20;
+        long hours   = totalSeconds / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+        return String.format("Session: %02d:%02d:%02d", hours, minutes, seconds);
     }
 }
